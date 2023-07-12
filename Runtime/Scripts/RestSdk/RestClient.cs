@@ -1,4 +1,6 @@
 using CommonUtils.Coroutines;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -397,16 +399,24 @@ namespace CommonUtils.RestSdk {
 			var rawResponse = GetRawResponseFrom(www);
 			var result = new RestResponse<TDto> {
 				AdditionalInfo = rawResponse.AdditionalInfo,
-				ErrorMessage   = rawResponse.ErrorMessage,
-				StatusCode     = rawResponse.StatusCode
+				ErrorMessage = rawResponse.ErrorMessage,
+				StatusCode = rawResponse.StatusCode
 			};
 			if (rawResponse.IsSuccess && !string.IsNullOrEmpty(rawResponse.Data)) {
 				try {
+					result.Data = JsonConvert.DeserializeObject<TDto>(rawResponse.Data,
+						new JsonSerializerSettings {
+							Error = (sender, errorArgs) => {
+								Debug.LogError($"Json deserialization error at: {rawResponse.Data}");
+								Debug.LogError($"{errorArgs.ErrorContext.Error.Message}");
+								errorArgs.ErrorContext.Handled = true;
+							}
+						});
 					result.Data = JsonUtility.FromJson<TDto>(rawResponse.Data);
 				} catch (Exception ex) {
-					Debug.LogError($"Could not deserialize response to type {typeof(TDto).Name}. Raw response was: {rawResponse.Data}. Error: {ex.Message}");
+					Debug.LogError($"Could not deserialize response to type {typeof(TDto).Name}. Raw response was: {rawResponse.Data}. Error: {ex.Message}</color>");
 					Debug.LogException(ex);
-					result.StatusCode   = 0;
+					result.StatusCode = 0;
 					result.ErrorMessage = ex.Message;
 				}
 			}
