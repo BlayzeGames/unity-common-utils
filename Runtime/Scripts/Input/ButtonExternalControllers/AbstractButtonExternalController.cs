@@ -134,6 +134,9 @@ namespace CommonUtils.Input.ButtonExternalControllers {
 
 		private void subscribeToBlockers(IEnumerable<GameObject> blockers, bool subscribe) {
 			foreach (var blocker in blockers) {
+				if (!blocker) {
+					continue;
+				}
 				subscribeToBlocker(blocker, subscribe);
 			}
 		}
